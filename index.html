@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indic-CLAP demo</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+               "Noto Sans", sans-serif;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  color: #1f2328;
+  line-height: 1.55;
+  background: #ffffff;
+  font-size: 14px;
+}
+h1 { font-size: 22px; margin: 0 0 6px; font-weight: 700; letter-spacing: -0.01em; }
+.subtitle { color: #6b7280; font-size: 13px; margin-bottom: 18px; }
+.anon-tag {
+  display: inline-block; font-size: 11px; padding: 2px 8px;
+  background: #f4f4f5; border: 1px solid #e5e7eb; border-radius: 10px;
+  color: #6b7280; margin-left: 8px; vertical-align: middle;
+}
+
+.legend {
+  background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;
+  padding: 12px 16px; font-size: 13px; margin: 18px 0 36px;
+}
+.legend-row { margin: 4px 0; }
+.legend-name { font-weight: 600; display: inline-block; min-width: 130px; }
+.legend-desc { color: #4b5563; }
+
+h2 {
+  font-size: 17px;
+  margin: 40px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+}
+h2 .meta { font-size: 12px; color: #6b7280; font-weight: 400; margin-left: 6px; }
+h3 {
+  font-size: 13px;
+  margin: 18px 0 6px;
+  color: #374151;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+h3.chunk-h {
+  background: #f4f6f8;
+  padding: 6px 12px;
+  border-left: 3px solid #1d4ed8;
+  border-radius: 0 4px 4px 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  color: #1f2937;
+  margin: 22px 0 8px;
+}
+.chunk-note {
+  font-family: -apple-system, sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.chunk-block { margin-bottom: 10px; }
+.chunk-table { margin: 4px 0 8px; }
+
+audio { width: 100%; margin: 6px 0 4px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 14px;
+  font-size: 13px;
+}
+th, td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #f1f3f5;
+  vertical-align: top;
+}
+th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #4b5563;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e5e7eb;
+}
+.method-cell {
+  font-weight: 600;
+  color: #1f2328;
+  white-space: nowrap;
+  width: 145px;
+}
+.score {
+  color: #9ca3af;
+  font-size: 11px;
+  margin-left: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.tag {
+  display: inline-block;
+  margin-right: 10px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+tr.hybrid-row td { background: #eff6ff; }
+tr.hybrid-row td.method-cell { color: #1d4ed8; }
+
+.lang-table th:first-child { width: 130px; }
+.lang-table .lang-cell { font-weight: 600; color: #1f2328; }
+
+footer {
+  color: #9ca3af; font-size: 11px;
+  margin-top: 56px; padding-top: 20px;
+  border-top: 1px solid #f1f3f5;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<h1>Indic-CLAP: cross-lingual audio distillation
+<span class="anon-tag">anonymous submission</span></h1>
+<p class="subtitle">
+Demo page. Each of the four audio clips is processed by five models. We
+report the top-3 zero-shot tags and the top-1 retrieved caption per model.
+The English CLAP row uses CLAP's own English text encoder over the
+English label set / English caption pool; all other rows are joint Indic
+students producing Hindi outputs.
+Tag pool size: 55 labels &middot;
+caption retrieval pool size: 2000 captions.
+</p>
+
+<div class="legend">
+<div class="legend-row"><span class="legend-name">English CLAP</span><span class="legend-desc">— frozen reference: CLAP's own English text encoder</span></div>
+<div class="legend-row"><span class="legend-name">TT-MSE</span><span class="legend-desc">— joint student: text-teacher MSE distillation</span></div>
+<div class="legend-row"><span class="legend-name">AT-MSE</span><span class="legend-desc">— joint student: audio-teacher MSE distillation</span></div>
+<div class="legend-row"><span class="legend-name">InfoNCE (λ=1)</span><span class="legend-desc">— joint student: pure InfoNCE contrastive loss</span></div>
+<div class="legend-row"><span class="legend-name">Hybrid (λ=0.10)</span><span class="legend-desc">— joint student: cosine-text ⊕ InfoNCE-audio hybrid (our method)</span></div>
+</div>
+
+
+<h2>Audio Clip 1 <span class="meta">— 30.0s, 3 × 10s chunks</span></h2>
+<audio controls preload="metadata" src="audio/clip1.wav"></audio>
+
+<h3 class="chunk-h">00:00–00:10</h3>
+<div class="chunk-block">
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-3 zero-shot tags</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td><span class="tag">rain falling <span class="score">(0.377)</span></span> <span class="tag">fire crackling <span class="score">(0.335)</span></span> <span class="tag">thunderstorm <span class="score">(0.230)</span></span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.431)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.224)</span></span> <span class="tag">आग की चटकन <span class="score">(0.212)</span></span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.692)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.628)</span></span> <span class="tag">हवा चलना <span class="score">(0.420)</span></span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.431)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.374)</span></span> <span class="tag">चुप्पी <span class="score">(0.306)</span></span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.429)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.301)</span></span> <span class="tag">आग की चटकन <span class="score">(0.256)</span></span></td></tr>
+    </tbody>
+  </table>
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-1 retrieved caption</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td>Rain is falling continuously <span class="score">(0.468)</span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td>भारी बारिश जमीन पर गिर रही है <span class="score">(0.469)</span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td>बारिश तेज़ी से गिर रही है जैसे हवा के झोंके आ रहे हैं और दूर में गरज सुनाई दे रही है <span class="score">(0.712)</span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td>बारिश और तूफान में गरज। <span class="score">(0.460)</span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td>बारिश लगातार गिर रही है <span class="score">(0.482)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<h3 class="chunk-h">00:10–00:20</h3>
+<div class="chunk-block">
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-3 zero-shot tags</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td><span class="tag">rain falling <span class="score">(0.387)</span></span> <span class="tag">fire crackling <span class="score">(0.355)</span></span> <span class="tag">water drops <span class="score">(0.266)</span></span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.361)</span></span> <span class="tag">आग की चटकन <span class="score">(0.168)</span></span> <span class="tag">पृष्ठभूमि शोर <span class="score">(0.165)</span></span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.705)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.590)</span></span> <span class="tag">पृष्ठभूमि शोर <span class="score">(0.449)</span></span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.437)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.270)</span></span> <span class="tag">यातायात का शोर <span class="score">(0.262)</span></span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.390)</span></span> <span class="tag">आग की चटकन <span class="score">(0.234)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.224)</span></span></td></tr>
+    </tbody>
+  </table>
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-1 retrieved caption</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td>Rain is falling continuously <span class="score">(0.446)</span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td>भारी बारिश जमीन पर गिर रही है <span class="score">(0.458)</span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td>बारिश गिर रही है और छत से टपक रही है, फिर गड़गड़ाहट होती है <span class="score">(0.695)</span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td>हल्की बारिश के साथ नरम गरज <span class="score">(0.479)</span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td>भारी बारिश जमीन पर गिर रही है <span class="score">(0.508)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<h3 class="chunk-h">00:20–00:29</h3>
+<div class="chunk-block">
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-3 zero-shot tags</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td><span class="tag">rain falling <span class="score">(0.392)</span></span> <span class="tag">fire crackling <span class="score">(0.372)</span></span> <span class="tag">water drops <span class="score">(0.284)</span></span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.299)</span></span> <span class="tag">आग की चटकन <span class="score">(0.146)</span></span> <span class="tag">तालियां <span class="score">(0.122)</span></span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.685)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.565)</span></span> <span class="tag">पृष्ठभूमि शोर <span class="score">(0.452)</span></span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.423)</span></span> <span class="tag">यातायात का शोर <span class="score">(0.249)</span></span> <span class="tag">पानी की बूंदें <span class="score">(0.234)</span></span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td><span class="tag">बारिश की आवाज़ <span class="score">(0.349)</span></span> <span class="tag">आग की चटकन <span class="score">(0.201)</span></span> <span class="tag">बिजली और तूफ़ान <span class="score">(0.164)</span></span></td></tr>
+    </tbody>
+  </table>
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-1 retrieved caption</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td>Rain is falling continuously <span class="score">(0.379)</span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td>भारी बारिश जमीन पर गिर रही है <span class="score">(0.397)</span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td>बारिश होती है, धातु पर टपकती है, दूर में एक वाहन चलता है, टपकने की आवाज़ कम होती है जैसे बारिश जारी रहती है <span class="score">(0.674)</span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td>तेज बारिश गिर रही है और एक सतह पर छपक रही है <span class="score">(0.498)</span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td>भारी बारिश जमीन पर गिर रही है <span class="score">(0.467)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+
+<h2>Audio Clip 2 <span class="meta">— 15.0s, 2 × 10s chunks</span></h2>
+<audio controls preload="metadata" src="audio/clip2.wav"></audio>
+
+<h3 class="chunk-h">00:00–00:10</h3>
+<div class="chunk-block">
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-3 zero-shot tags</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td><span class="tag">thunderstorm <span class="score">(0.370)</span></span> <span class="tag">rain falling <span class="score">(0.144)</span></span> <span class="tag">frog croaking <span class="score">(0.107)</span></span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td><span class="tag">बिजली और तूफ़ान <span class="score">(0.483)</span></span> <span class="tag">चुप्पी <span class="score">(0.293)</span></span> <span class="tag">पृष्ठभूमि शोर <span class="score">(0.291)</span></span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td><span class="tag">बिजली और तूफ़ान <span class="score">(0.715)</span></span> <span class="tag">बारिश की आवाज़ <span class="score">(0.550)</span></span> <span class="tag">विस्फोट <span class="score">(0.447)</span></span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td><span class="tag">बिजली और तूफ़ान <span class="score">(0.454)</span></span> <span class="tag">हवा चलना <span class="score">(0.298)</span></span> <span class="tag">पानी की बूंदें <span class="score">(0.244)</span></span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td><span class="tag">बिजली और तूफ़ान <span class="score">(0.507)</span></span> <span class="tag">हवा चलना <span class="score">(0.254)</span></span> <span class="tag">आतिशबाज़ी <span class="score">(0.252)</span></span></td></tr>
+    </tbody>
+  </table>
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-1 retrieved caption</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td>A loud thunder cracking <span class="score">(0.495)</span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td>एक बहुत तेज़ गरज हुई <span class="score">(0.505)</span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td>बारिश और तूफान में गरज। <span class="score">(0.716)</span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td>बारिश और तूफान में गरज। <span class="score">(0.616)</span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td>गड़गड़ाहट की आवाज़ें होती हैं जबकि बारिश होती है <span class="score">(0.501)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<h3 class="chunk-h">00:10–00:15 <span class="chunk-note">(5.0s real audio, padded to 10s for encoding)</span></h3>
+<div class="chunk-block">
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-3 zero-shot tags</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td><span class="tag">thunderstorm <span class="score">(0.370)</span></span> <span class="tag">wind blowing <span class="score">(0.240)</span></span> <span class="tag">rain falling <span class="score">(0.206)</span></span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td><span class="tag">बिजली और तूफ़ान <span class="score">(0.529)</span></span> <span class="tag">चुप्पी <span class="score">(0.414)</span></span> <span class="tag">बारिश की आवाज़ <span class="score">(0.402)</span></span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td><span class="tag">बिजली और तूफ़ान <span class="score">(0.705)</span></span> <span class="tag">बारिश की आवाज़ <span class="score">(0.593)</span></span> <span class="tag">समुद्र की लहरें <span class="score">(0.531)</span></span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td><span class="tag">बिजली और तूफ़ान <span class="score">(0.406)</span></span> <span class="tag">हवा चलना <span class="score">(0.278)</span></span> <span class="tag">चुप्पी <span class="score">(0.253)</span></span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td><span class="tag">बिजली और तूफ़ान <span class="score">(0.483)</span></span> <span class="tag">कौए की कांव-कांव <span class="score">(0.421)</span></span> <span class="tag">वाशिंग मशीन <span class="score">(0.274)</span></span></td></tr>
+    </tbody>
+  </table>
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-1 retrieved caption</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td>Thunder roars in the distance as rain falls <span class="score">(0.500)</span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td>दूर से गरजती हुई आवाज़ के साथ बारिश गिर रही है <span class="score">(0.503)</span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td>बारिश और तूफान में गरज। <span class="score">(0.702)</span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td>हवा चल रही है और पत्ते सरसराते हैं, इसके बाद प्लास्टिक की खड़खड़ाहट और हवा एक माइक्रोफोन में बहती है <span class="score">(0.523)</span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td>गड़गड़ाहट के साथ गरजती हुई बिजली, उसके बाद चुप्पी <span class="score">(0.497)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+
+<h2>Audio Clip 3 <span class="meta">— 12.2s, 1 × 10s chunks</span></h2>
+<audio controls preload="metadata" src="audio/clip3.wav"></audio>
+
+<h3 class="chunk-h">00:00–00:10</h3>
+<div class="chunk-block">
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-3 zero-shot tags</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td><span class="tag">car horn <span class="score">(0.233)</span></span> <span class="tag">engine running <span class="score">(0.149)</span></span> <span class="tag">siren <span class="score">(0.129)</span></span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td><span class="tag">कार का हॉर्न <span class="score">(0.432)</span></span> <span class="tag">यातायात का शोर <span class="score">(0.429)</span></span> <span class="tag">साइरन <span class="score">(0.187)</span></span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td><span class="tag">कार का हॉर्न <span class="score">(0.535)</span></span> <span class="tag">साइरन <span class="score">(0.390)</span></span> <span class="tag">यातायात का शोर <span class="score">(0.370)</span></span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td><span class="tag">यातायात का शोर <span class="score">(0.419)</span></span> <span class="tag">कार का हॉर्न <span class="score">(0.294)</span></span> <span class="tag">साइरन <span class="score">(0.247)</span></span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td><span class="tag">कार का हॉर्न <span class="score">(0.409)</span></span> <span class="tag">यातायात का शोर <span class="score">(0.376)</span></span> <span class="tag">साइरन <span class="score">(0.192)</span></span></td></tr>
+    </tbody>
+  </table>
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-1 retrieved caption</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td>A car horn blows amid road noise <span class="score">(0.488)</span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td>गाड़ी का हॉर्न बजता है, सड़क की आवाज़ के बीच <span class="score">(0.532)</span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td>ट्रैफिक की गुनगुनाहट और फिर एक तेज कार का हॉर्न <span class="score">(0.618)</span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td>ट्रैफिक की गुनगुनाहट और फिर एक तेज कार का हॉर्न <span class="score">(0.563)</span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td>गाड़ी का हॉर्न बजता है, सड़क की आवाज़ के बीच <span class="score">(0.574)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+
+<h2>Audio Clip 4 <span class="meta">— 15.8s, 2 × 10s chunks</span></h2>
+<audio controls preload="metadata" src="audio/clip4.wav"></audio>
+
+<h3 class="chunk-h">00:00–00:10</h3>
+<div class="chunk-block">
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-3 zero-shot tags</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td><span class="tag">engine running <span class="score">(0.146)</span></span> <span class="tag">frog croaking <span class="score">(0.096)</span></span> <span class="tag">vacuum cleaner <span class="score">(0.096)</span></span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td><span class="tag">कुत्ते का भौंकना <span class="score">(0.273)</span></span> <span class="tag">ट्रेन गुज़रना <span class="score">(0.272)</span></span> <span class="tag">हवाई जहाज़ <span class="score">(0.269)</span></span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td><span class="tag">यातायात का शोर <span class="score">(0.427)</span></span> <span class="tag">ट्रेन गुज़रना <span class="score">(0.422)</span></span> <span class="tag">कुत्ते का भौंकना <span class="score">(0.405)</span></span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td><span class="tag">कुत्ते का भौंकना <span class="score">(0.354)</span></span> <span class="tag">समुद्र की लहरें <span class="score">(0.328)</span></span> <span class="tag">हवा चलना <span class="score">(0.307)</span></span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td><span class="tag">यातायात का शोर <span class="score">(0.299)</span></span> <span class="tag">कुत्ते का भौंकना <span class="score">(0.258)</span></span> <span class="tag">ट्रेन गुज़रना <span class="score">(0.245)</span></span></td></tr>
+    </tbody>
+  </table>
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-1 retrieved caption</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td>A dog barks along with outdoor noises <span class="score">(0.376)</span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td>एक कुत्ता भौंकता है साथ में बाहरी आवाज़ें। <span class="score">(0.356)</span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td>एक वाहन तेजी से चल रहा है और गुजर रहा है, जैसे हवा के झोंके चल रहे हैं और दूर से पत्ते सरसराते हैं <span class="score">(0.490)</span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td>लहरें और हवा एक किनारे को खींच रही हैं <span class="score">(0.422)</span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td>हवा चल रही है जिसमें कुछ सरसराहट और इंजनों की गुनगुनाहट है <span class="score">(0.339)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<h3 class="chunk-h">00:10–00:15 <span class="chunk-note">(5.8s real audio, padded to 10s for encoding)</span></h3>
+<div class="chunk-block">
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-3 zero-shot tags</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td><span class="tag">engine running <span class="score">(0.255)</span></span> <span class="tag">train passing <span class="score">(0.125)</span></span> <span class="tag">car horn <span class="score">(0.098)</span></span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td><span class="tag">ट्रेन गुज़रना <span class="score">(0.355)</span></span> <span class="tag">यातायात का शोर <span class="score">(0.341)</span></span> <span class="tag">चुप्पी <span class="score">(0.319)</span></span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td><span class="tag">यातायात का शोर <span class="score">(0.490)</span></span> <span class="tag">ट्रेन गुज़रना <span class="score">(0.484)</span></span> <span class="tag">इंजन की आवाज़ <span class="score">(0.336)</span></span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td><span class="tag">ट्रेन गुज़रना <span class="score">(0.368)</span></span> <span class="tag">हवा चलना <span class="score">(0.191)</span></span> <span class="tag">यातायात का शोर <span class="score">(0.164)</span></span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td><span class="tag">यातायात का शोर <span class="score">(0.372)</span></span> <span class="tag">ट्रेन गुज़रना <span class="score">(0.356)</span></span> <span class="tag">वाशिंग मशीन <span class="score">(0.271)</span></span></td></tr>
+    </tbody>
+  </table>
+  <table class="chunk-table">
+    <thead><tr><th>Model</th><th>Top-1 retrieved caption</th></tr></thead>
+    <tbody>
+    <tr><td class="method-cell">English CLAP</td><td>A train engine running <span class="score">(0.359)</span></td></tr>
+<tr><td class="method-cell">TT-MSE</td><td>एक उच्च स्वर का संकेत, उसके बाद ट्रेन पटरियों पर चलती है <span class="score">(0.358)</span></td></tr>
+<tr><td class="method-cell">AT-MSE</td><td>एक बस का इंजन चल रहा है, जबकि कारें गुजर रही हैं और दूर में एक कार का हॉर्न बजता है <span class="score">(0.544)</span></td></tr>
+<tr><td class="method-cell">InfoNCE (λ=1)</td><td>हवा बह रही है जैसे कारें गुजर रही हैं <span class="score">(0.454)</span></td></tr>
+<tr class="hybrid-row"><td class="method-cell">Hybrid (λ=0.10)</td><td>एक वाहन तेजी से चल रहा है और गुजर रहा है, जैसे हवा के झोंके चल रहे हैं और दूर से पत्ते सरसराते हैं <span class="score">(0.448)</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+
+
+<h2>Multilingual breadth <span class="meta">— Audio Clip 1, Hybrid (λ=0.10), all 9 languages</span></h2>
+<p style="font-size: 13px; color: #4b5563;">
+Same audio clip, top-1 retrieved caption in each language. A single joint
+encoder serves all 9 Indic languages.
+</p>
+<table class="lang-table">
+<thead><tr><th>Language</th><th>Top-1 retrieved caption</th></tr></thead>
+<tbody>
+<tr><td class="lang-cell">Hindi (hi)</td><td>बारिश लगातार गिर रही है <span class="score">(0.482)</span></td></tr>
+<tr><td class="lang-cell">Bengali (bn)</td><td>নিরবচ্ছিন্ন বৃষ্টি পৃষ্ঠে পড়ছে <span class="score">(0.495)</span></td></tr>
+<tr><td class="lang-cell">Tamil (ta)</td><td>தொடர்ந்து மழை மேற்பரப்பில் விழுகிறது <span class="score">(0.497)</span></td></tr>
+<tr><td class="lang-cell">Telugu (te)</td><td>మోస్తున్న వర్షం <span class="score">(0.515)</span></td></tr>
+<tr><td class="lang-cell">Marathi (mr)</td><td>पाऊस सतत पडत आहे <span class="score">(0.494)</span></td></tr>
+<tr><td class="lang-cell">Gujarati (gu)</td><td>સતત વરસાદ સપાટી પર પડી રહ્યો છે <span class="score">(0.500)</span></td></tr>
+<tr><td class="lang-cell">Kannada (kn)</td><td>ಮಳೆ ಬೀರುವ ಶ್ರವಣ ಕೇಳುತ್ತಿದೆ <span class="score">(0.500)</span></td></tr>
+<tr><td class="lang-cell">Malayalam (ml)</td><td>മഴ തുടർച്ചയായി വീഴുന്നു <span class="score">(0.489)</span></td></tr>
+<tr><td class="lang-cell">Punjabi (pa)</td><td>ਲਗਾਤਾਰ ਬਰਸਾਤ ਸਤਹ 'ਤੇ ਪੈਂਦੀ <span class="score">(0.489)</span></td></tr>
+</tbody>
+</table>
+
+
+<footer>
+Indic-CLAP demo &middot; anonymous submission &middot; code and checkpoints available
+in the anonymized repository
+</footer>
+
+</body>
+</html>
